@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -9,7 +8,11 @@ const recorder = require("node-record-lpcm16");
 
 const app = express();
 
+const server = require("http").createServer(app);
+const io = require("socket.io")(server);
+
 app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "public")));
 
 mongoose.connect(
   "mongodb+srv://sid:sid@cluster0.skejf.mongodb.net/AVTest?retryWrites=true&w=majority"
@@ -89,33 +92,64 @@ const record_audio = (fname) => {
 
 // *******************************************************************************************************
 
-let port = process.env.PORT;
-if (port == null || port == "") {
-  port = 8000;
-}
-app.listen(port, function (err) {
-  if (err) {
-    console.log(err);
-  }
-  console.log("Server Has Started On Port -> 8000!");
-});
-
 app.get("/", function (req, res) {
   res.render("index", { pageTitle: "HomePage" });
 });
 
-app.get("/data", function (req, res) {
+  app.get("/test", function (req, res) {
+    res.render("click");
+  });
+
+  app.get("/data", function (req, res) {
+    let i = 0;
+    const dataGathering = setInterval(function () {
+      ImageCapture(i);
+      record_audio(i);
+      i++;
+    }, 12000);
+
+    //End the dataGathering function after 30 seconds. Change this later to use test duration time.
+    setTimeout(() => {
+      clearInterval(dataGathering);
+    }, 100000);
+
+    res.render("index", { pageTitle: "Data_Gathering" });
+  });
+
+
+
   let i = 0;
-  const dataGathering = setInterval(function () {
-    ImageCapture(i);
-    record_audio(i);
-    i++;
-  }, 12000);
+  io.on("connection", function (socket) {
+    console.log("User Connected", socket.id);
 
-  //End the dataGathering function after 30 seconds. Change this later to use test duration time.
-  setTimeout(() => {
-    clearInterval(dataGathering);
-  }, 100000);
+    socket.on("image", async (image) => {
+      // const buffer = Buffer.from(image, 'base64');
+      console.log("Inside");
+      const buffer = image;
+      console.log(buffer);
+      await fs
+        .writeFile(`./images/${i}.jpg`, buffer, function(err){
+            if (err){
+                console.log(err);
+                return;
+            }
+            i++;
+        }); // fs.promises;
+    });
+  });
+  io.on("disconnect", () => {
+    console.log("user disconnected");
+  });
 
-  res.render("index", { pageTitle: "Data_Gathering" });
+
+
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 8000;
+}
+server.listen(port, function (err) {
+  if (err) {
+    console.log(err);
+  }
+  console.log("Server Has Started On Port -> 8000!");
 });

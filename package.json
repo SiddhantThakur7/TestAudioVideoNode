@@ -16,7 +16,9 @@
     "mongoose": "^5.12.8",
     "node-record-lpcm16": "^1.0.1",
     "node-webcam": "^0.8.0",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.7",
+    "socket.io": "^4.1.1",
+    "socket.io-client": "^4.1.1"
   },
   "engines": {
     "node": "14.16.1"
