@@ -15,7 +15,7 @@ app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
 mongoose.connect(
-  "mongodb+srv://sid:sid@cluster0.skejf.mongodb.net/AVTest?retryWrites=true&w=majority"
+  "MongoDBURI"
 );
 const Schema = mongoose.Schema;
 
